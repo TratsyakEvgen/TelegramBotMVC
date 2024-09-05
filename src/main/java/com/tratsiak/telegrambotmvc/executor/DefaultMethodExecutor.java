@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public class DefaultMethodExecutor implements MethodExecutor {
     @Override
-    public void executeVoidMethodWithParameter(Object object, Object param, String paramName) {
+    public void execute(Object object, Object param, String paramName) {
         Class<?> paramClass = param.getClass();
         try {
             Arrays.stream(object.getClass().getMethods())

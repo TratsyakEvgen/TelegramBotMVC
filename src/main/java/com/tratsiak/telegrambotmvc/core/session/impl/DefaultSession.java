@@ -17,10 +17,10 @@ import java.util.Map;
 public class DefaultSession implements Session {
 
     private final long id;
-    private String textMessage;
-    private String pastCommand;
-    private String currentCommand;
-    private String nextCommand;
+    private String message;
+    private String previousEndpoint;
+    private String currentEndpoint;
+    private String nextEndpoint;
     private Map<String, String> parameters;
     private Map<String, Object> entities;
 
@@ -30,7 +30,7 @@ public class DefaultSession implements Session {
     }
 
     @Override
-    public String getParam(String name) {
+    public String getParameter(String name) {
         return parameters.get(name);
     }
 

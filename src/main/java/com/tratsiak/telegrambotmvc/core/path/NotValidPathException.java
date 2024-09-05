@@ -1,23 +1,8 @@
 package com.tratsiak.telegrambotmvc.core.path;
 
-public class NotValidPathException extends Exception {
-
-    public NotValidPathException() {
-    }
-
+public class NotValidPathException extends RuntimeException {
     public NotValidPathException(String message) {
         super(message);
     }
 
-    public NotValidPathException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public NotValidPathException(Throwable cause) {
-        super(cause);
-    }
-
-    public NotValidPathException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

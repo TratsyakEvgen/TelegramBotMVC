@@ -8,21 +8,21 @@ public interface Session {
 
     long getId();
 
-    String getPastCommand();
+    String getPreviousEndpoint();
 
-    void setPastCommand(String pastCommand);
+    void setPreviousEndpoint(String pastCommand);
 
-    String getCurrentCommand();
+    String getCurrentEndpoint();
 
-    void setCurrentCommand(String currentCommand);
+    void setCurrentEndpoint(String currentCommand);
 
-    String getNextCommand();
+    String getNextEndpoint();
 
-    void setNextCommand(String nextCommand);
+    void setNextEndpoint(String nextCommand);
 
     Map<String, String> getParameters();
 
-    String getParam(String name);
+    String getParameter(String name);
 
     void setParameters(Map<String, String> parameters);
 
@@ -34,7 +34,7 @@ public interface Session {
 
     void setEntities(Map<String, Object> entities);
 
-    String getTextMessage();
+    String getMessage();
 
-    void setTextMessage(String textMessage);
+    void setMessage(String textMessage);
 }
