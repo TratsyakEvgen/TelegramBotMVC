@@ -1,9 +1,8 @@
 package com.tratsiak.telegrambotmvc.core.session;
 
-import org.telegram.telegrambots.meta.api.objects.Update;
 
-import java.util.Optional;
+import com.tratsiak.telegrambotmvc.core.parser.Request;
 
 public interface SessionsProvider {
-    Optional<Session> getSession(Update update);
+    Session getSession(Request request);
 }

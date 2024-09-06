@@ -78,7 +78,7 @@ public class MessageBuilder {
                 .text(text)
                 .parseMode(parseMode);
 
-        if (!isKeyboardButton && !isKeyboardMarkup){
+        if (!isKeyboardButton && !isKeyboardMarkup) {
             return builder.build();
         }
 

@@ -1,16 +1,17 @@
 package com.tratsiak.telegrambotmvc.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tratsiak.telegrambotmvc.BotMVC;
 import com.tratsiak.telegrambotmvc.annotation.BotEndpoint;
-import com.tratsiak.telegrambotmvc.core.BotMVC;
-import com.tratsiak.telegrambotmvc.core.dispatcher.Dispatcher;
-import com.tratsiak.telegrambotmvc.core.dispatcher.impl.DefaultDispatcher;
-import com.tratsiak.telegrambotmvc.core.exeption.handler.ErrorViewer;
-import com.tratsiak.telegrambotmvc.core.exeption.handler.ExceptionHandler;
-import com.tratsiak.telegrambotmvc.core.exeption.handler.MapperExceptionHandler;
-import com.tratsiak.telegrambotmvc.core.exeption.handler.impl.DefaultErrorViewer;
-import com.tratsiak.telegrambotmvc.core.exeption.handler.impl.DefaultMapperExceptionHandlers;
-import com.tratsiak.telegrambotmvc.core.exeption.handler.impl.DefaultResponseExceptionHandler;
+import com.tratsiak.telegrambotmvc.annotation.ExceptionHandler;
+import com.tratsiak.telegrambotmvc.core.dispatcher.EndpointDispatcher;
+import com.tratsiak.telegrambotmvc.core.dispatcher.impl.EndpointDispatcherImpl;
+import com.tratsiak.telegrambotmvc.core.exeption.handler.DispatcherExceptionHandler;
+import com.tratsiak.telegrambotmvc.core.exeption.handler.impl.DefaultExceptionHandler;
+import com.tratsiak.telegrambotmvc.core.exeption.handler.impl.DispatcherExceptionHandlersImpl;
+import com.tratsiak.telegrambotmvc.core.parser.UpdateParser;
+import com.tratsiak.telegrambotmvc.core.parser.UpdateParserProvider;
+import com.tratsiak.telegrambotmvc.core.parser.impl.*;
 import com.tratsiak.telegrambotmvc.core.path.PathParser;
 import com.tratsiak.telegrambotmvc.core.path.PathValidator;
 import com.tratsiak.telegrambotmvc.core.path.impl.DefaultPathParser;
@@ -21,12 +22,8 @@ import com.tratsiak.telegrambotmvc.core.session.SessionsProvider;
 import com.tratsiak.telegrambotmvc.core.session.impl.DefaultSessionInitializer;
 import com.tratsiak.telegrambotmvc.core.session.impl.DefaultSessionModifier;
 import com.tratsiak.telegrambotmvc.core.session.impl.SessionsProviderImpl;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.UpdateParser;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.UpdateParserProvider;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.impl.*;
-import com.tratsiak.telegrambotmvc.exception.ResponseException;
-import com.tratsiak.telegrambotmvc.executor.DefaultMethodExecutor;
-import com.tratsiak.telegrambotmvc.executor.MethodExecutor;
+import com.tratsiak.telegrambotmvc.reflection.MethodExecutor;
+import com.tratsiak.telegrambotmvc.reflection.MethodExecutorImpl;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -44,6 +41,11 @@ import java.util.List;
 
 @Configuration
 public class TelegramBotMVCAutoConfiguration {
+
+    @Bean
+    public DefaultExceptionHandler defaultExceptionHandler() {
+        return new DefaultExceptionHandler();
+    }
 
     @Bean
     public UpdateParser updateBotCommandParser() {
@@ -71,76 +73,59 @@ public class TelegramBotMVCAutoConfiguration {
     }
 
     @Bean
-    public Dispatcher controllerDispatcherRequests(PathValidator pathValidator, ApplicationContext context) {
+    public EndpointDispatcher controllerDispatcherRequests(PathValidator pathValidator, ApplicationContext context) {
         List<Object> controllers = context.getBeansWithAnnotation(BotEndpoint.class).values().stream().toList();
-        return new DefaultDispatcher(pathValidator, controllers);
-    }
-
-
-    @Bean
-//    @ConditionalOnMissingBean(ErrorViewer.class)
-    public ErrorViewer errorViewer() {
-        return new DefaultErrorViewer();
+        return new EndpointDispatcherImpl(pathValidator, controllers);
     }
 
     @Bean
-    public ExceptionHandler<ResponseException> responseExceptionExceptionHandler() {
-        return new DefaultResponseExceptionHandler();
+    public DispatcherExceptionHandler mapperExceptionHandler(ApplicationContext context) {
+        List<Object> handlers = context.getBeansWithAnnotation(ExceptionHandler.class).values().stream().toList();
+        return new DispatcherExceptionHandlersImpl(handlers);
     }
 
     @Bean
-//    @ConditionalOnMissingBean(MapperExceptionHandler.class)
-    public MapperExceptionHandler mapperExceptionHandler(ApplicationContext context) {
-        return new DefaultMapperExceptionHandlers(context);
-    }
-
-    @Bean
-//    @ConditionalOnMissingBean(PathParser.class)
     public PathParser pathParser() {
         return new DefaultPathParser();
     }
 
     @Bean
- //   @ConditionalOnMissingBean(PathValidator.class)
     public PathValidator pathValidator() {
         return new DefaultPathValidator();
     }
 
     @Bean
- //   @ConditionalOnMissingBean(SessionModifier.class)
+    @ConditionalOnMissingBean(SessionModifier.class)
     public SessionModifier sessionModifier() {
         return new DefaultSessionModifier();
     }
 
     @Bean
-//    @ConditionalOnMissingBean(SessionInitializer.class)
+    @ConditionalOnMissingBean(SessionInitializer.class)
     public SessionInitializer sessionInitializer() {
         return new DefaultSessionInitializer();
     }
 
     @Bean
-    //   @ConditionalOnMissingBean(SessionsProvider.class)
-    public SessionsProvider sessionProvider(UpdateParserProvider updateParserProvider,
-                                            SessionInitializer sessionInitializer,
+    public SessionsProvider sessionProvider(SessionInitializer sessionInitializer,
                                             PathValidator pathValidator,
-                                            PathParser pathParser) {
-        return new SessionsProviderImpl(updateParserProvider, sessionInitializer, pathValidator, pathParser);
+                                            PathParser pathParser,
+                                            SessionModifier sessionModifier) {
+        return new SessionsProviderImpl(sessionModifier, sessionInitializer, pathValidator, pathParser);
     }
 
 
     @Bean
     @ConditionalOnProperty(name = {"botToken", "botName"})
-//    @ConditionalOnMissingBean(LongPollingBot.class)
-    public LongPollingBot longPollingBot(@Value("${botToken}") String botToken,
-                                         Dispatcher dispatcher,
+    public LongPollingBot longPollingBot(UpdateParserProvider updateParserProvider,
+                                         @Value("${botToken}") String botToken,
+                                         EndpointDispatcher endpointDispatcher,
                                          MethodExecutor methodExecutor,
                                          @Value("${botName}") String botName,
                                          SessionsProvider botSession,
-                                         MapperExceptionHandler mapperExceptionHandler,
-                                         ErrorViewer errorViewer,
-                                         SessionModifier sessionModifier) {
-        return new BotMVC(botToken, dispatcher, methodExecutor, botName,
-                botSession, mapperExceptionHandler, errorViewer, sessionModifier);
+                                         DispatcherExceptionHandler dispatcherExceptionHandler) {
+        return new BotMVC(botToken, updateParserProvider, endpointDispatcher, methodExecutor, botName,
+                botSession, dispatcherExceptionHandler);
     }
 
     @Bean
@@ -150,9 +135,8 @@ public class TelegramBotMVCAutoConfiguration {
     }
 
     @Bean
-    //   @ConditionalOnMissingBean(MethodExecutor.class)
     public MethodExecutor methodExecutor() {
-        return new DefaultMethodExecutor();
+        return new MethodExecutorImpl();
     }
 
     @Bean

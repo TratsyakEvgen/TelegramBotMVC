@@ -2,42 +2,29 @@ package com.tratsiak.telegrambotmvc.core.dispatcher.impl;
 
 
 import com.tratsiak.telegrambotmvc.annotation.BotEndpoint;
-import com.tratsiak.telegrambotmvc.core.dispatcher.Dispatcher;
-import com.tratsiak.telegrambotmvc.core.dispatcher.DispatcherException;
+import com.tratsiak.telegrambotmvc.core.dispatcher.EndpointDispatcher;
+import com.tratsiak.telegrambotmvc.core.dispatcher.EndpointDispatcherException;
 import com.tratsiak.telegrambotmvc.core.path.PathValidator;
 import com.tratsiak.telegrambotmvc.core.session.Session;
 import com.tratsiak.telegrambotmvc.core.view.View;
+import com.tratsiak.telegrambotmvc.reflection.MethodOfObject;
 import jakarta.annotation.PostConstruct;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 
-@Getter
-@Setter
-@ToString
-public class DefaultDispatcher implements Dispatcher {
+@RequiredArgsConstructor
+public class EndpointDispatcherImpl implements EndpointDispatcher {
 
     private final PathValidator pathValidator;
 
     private final List<Object> controllers;
+    private final Map<String, MethodOfObject> methodsMap = new HashMap<>();
 
-    private final Map<String, MethodOfObject> methodsMap;
-
-
-    public DefaultDispatcher(PathValidator pathValidator, List<Object> controllers) {
-        this.pathValidator = pathValidator;
-        this.controllers = controllers;
-        this.methodsMap = new HashMap<>();
-    }
 
     @PostConstruct
-    @Override
     public void init() {
         controllers.forEach(bean -> {
             Class<?> beanClass = bean.getClass();
@@ -51,7 +38,9 @@ public class DefaultDispatcher implements Dispatcher {
 
                         BotEndpoint annotationOnMethod = method.getDeclaredAnnotation(BotEndpoint.class);
                         String finalPath = path + annotationOnMethod.path();
+
                         pathValidator.isValidPath(finalPath);
+
                         method.setAccessible(true);
                         methodsMap.put(finalPath, new MethodOfObject(bean, method));
 
@@ -61,27 +50,21 @@ public class DefaultDispatcher implements Dispatcher {
 
 
     @Override
-    public Optional<View> execute(Session session) {
+    public View invoke(Session session) {
 
         String endpoint = session.getCurrentEndpoint();
         MethodOfObject methodOfObject = methodsMap.get(endpoint);
-        Optional<MethodOfObject> optionalMethodOfObject = Optional.ofNullable(methodOfObject);
 
         try {
-            View view = (View) optionalMethodOfObject.orElseThrow(
-                    () -> new DispatcherException(String.format("Endpoint %s not found", endpoint))
-            ).method.invoke(methodOfObject.object, session);
-            return Optional.ofNullable(view);
+            return (View) Optional.ofNullable(methodOfObject)
+                    .orElseThrow(() -> new EndpointDispatcherException(String.format("Endpoint %s not found", endpoint)))
+                    .method()
+                    .invoke(methodOfObject.object(), session);
+
         } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new DispatcherException("Can't invoke method for endpoint " + endpoint, e);
+            throw new EndpointDispatcherException("Can't invoke method for endpoint " + endpoint, e);
         }
     }
 
-
-    @AllArgsConstructor
-    private static class MethodOfObject {
-        private Object object;
-        private Method method;
-    }
 
 }

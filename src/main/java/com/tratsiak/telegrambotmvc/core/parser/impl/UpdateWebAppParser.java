@@ -1,12 +1,12 @@
-package com.tratsiak.telegrambotmvc.core.session.impl.parser.impl;
+package com.tratsiak.telegrambotmvc.core.parser.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.Request;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.UpdateParser;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.UpdateParserType;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.WebApp;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.exception.UpdateParserException;
+import com.tratsiak.telegrambotmvc.core.parser.Request;
+import com.tratsiak.telegrambotmvc.core.parser.UpdateParser;
+import com.tratsiak.telegrambotmvc.core.parser.UpdateParserType;
+import com.tratsiak.telegrambotmvc.core.parser.WebApp;
+import com.tratsiak.telegrambotmvc.core.parser.exception.UpdateParserException;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 

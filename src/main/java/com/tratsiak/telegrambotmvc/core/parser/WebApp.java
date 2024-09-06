@@ -1,4 +1,4 @@
-package com.tratsiak.telegrambotmvc.core.session.impl.parser;
+package com.tratsiak.telegrambotmvc.core.parser;
 
 import lombok.Data;
 

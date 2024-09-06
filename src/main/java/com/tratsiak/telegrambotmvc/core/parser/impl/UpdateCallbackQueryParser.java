@@ -1,8 +1,8 @@
-package com.tratsiak.telegrambotmvc.core.session.impl.parser.impl;
+package com.tratsiak.telegrambotmvc.core.parser.impl;
 
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.Request;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.UpdateParser;
-import com.tratsiak.telegrambotmvc.core.session.impl.parser.UpdateParserType;
+import com.tratsiak.telegrambotmvc.core.parser.Request;
+import com.tratsiak.telegrambotmvc.core.parser.UpdateParser;
+import com.tratsiak.telegrambotmvc.core.parser.UpdateParserType;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
